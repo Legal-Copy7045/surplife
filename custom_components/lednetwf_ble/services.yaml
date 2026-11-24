@@ -1,0 +1,18 @@
+set_segment_colors:
+  target:
+    entity:
+      integration: lednetwf_ble
+      domain: light
+  fields:
+    colors:
+      required: true
+      example: "[[255, 0, 0], [0, 0, 0], [0, 255, 0]]"
+      selector:
+        object:
+    brightness:
+      required: false
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255

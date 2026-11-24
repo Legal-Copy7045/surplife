@@ -660,6 +660,46 @@ def build_iotbt_segment_color_command(
     # the app uses 0x0A only for queries.
     return wrap_command(raw_cmd, cmd_family=0x0B)
 
+
+
+# Most per-segment entries one unsegmented frame can carry: byte 6 of the
+# transport header is (payload length + 1) in a single byte, and the payload
+# is 7 header bytes + 4 bytes per segment.
+IOTBT_SEGMENT_MAX_ENTRIES = 61
+
+
+def build_iotbt_segment_colors_command(
+    segments: list[tuple[int, int, int]],
+) -> bytearray:
+    """
+    Build an IOTBT segment colour command with a colour per segment (0xE1 0x03).
+
+    Same frame as build_iotbt_segment_color_command, but each entry carries its
+    own colour instead of repeating one:
+
+        E1 03 00 <n> 00 00 <n> [A1 <hue/2> <sat 0-100> <val 0-100>] x n
+
+    Args:
+        segments: (hue 0-359, saturation 0-100, value 0-100) per segment, in
+                  string order. A value of 0 leaves that segment dark.
+
+    Returns:
+        Wrapped command packet
+    """
+    count = len(segments)
+    if not 1 <= count <= IOTBT_SEGMENT_MAX_ENTRIES:
+        raise ValueError(
+            f"segment count must be 1-{IOTBT_SEGMENT_MAX_ENTRIES}, got {count}"
+        )
+    raw_cmd = bytearray([0xE1, 0x03, 0x00, count, 0x00, 0x00, count])
+    for hue, sat, val in segments:
+        raw_cmd.extend([
+            0xA1,
+            (int(hue) % 360) // 2,
+            max(0, min(100, int(sat))),
+            max(0, min(100, int(val))),
+        ])
+    return wrap_command(raw_cmd, cmd_family=0x0B)
     
 # Per-scene templates for the IOTBT segment effect list (0xE1 0x01 command).
 # Source: GitHub issue #83 BLE capture (IOTBT6BA) of the app's full built-in

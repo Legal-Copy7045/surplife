@@ -17,13 +17,21 @@ from homeassistant.components.light import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+import voluptuous as vol
 
 from .const import DOMAIN
+from .protocol import IOTBT_SEGMENT_MAX_ENTRIES
 from .device import LEDNetWFDevice
 
 _LOGGER = logging.getLogger(__name__)
+
+SERVICE_SET_SEGMENT_COLORS = "set_segment_colors"
+ATTR_COLORS = "colors"
 
 
 async def async_setup_entry(
@@ -47,12 +55,44 @@ async def async_setup_entry(
 
     async_add_entities(entities)
 
+    # Per-segment colour for IOTBT segment devices (addressable strings).
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_SEGMENT_COLORS,
+        {
+            vol.Required(ATTR_COLORS): vol.All(
+                cv.ensure_list,
+                vol.Length(min=1, max=IOTBT_SEGMENT_MAX_ENTRIES),
+                [vol.All(
+                    vol.ExactSequence((cv.byte, cv.byte, cv.byte)),
+                    vol.Coerce(tuple),
+                )],
+            ),
+            vol.Optional(ATTR_BRIGHTNESS, default=255): vol.All(
+                vol.Coerce(int), vol.Range(min=0, max=255)
+            ),
+        },
+        "async_set_segment_colors",
+    )
+
 
 class LEDNetWFLight(LightEntity):
     """Representation of a LEDnetWF light."""
 
     _attr_has_entity_name = True
     _attr_name = None  # Use device name
+
+    async def async_set_segment_colors(
+        self, colors: list[tuple[int, int, int]], brightness: int = 255
+    ) -> None:
+        """Handle the set_segment_colors action."""
+        if not self._device.is_iotbt_segment:
+            raise HomeAssistantError(
+                f"{self.entity_id} does not support per-segment colour"
+            )
+        if not self._device.is_on:
+            await self._device.turn_on()
+        await self._device.set_segment_colors(colors, brightness)
 
     def __init__(self, device: LEDNetWFDevice, entry: ConfigEntry) -> None:
         """Initialize the light."""

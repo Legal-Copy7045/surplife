@@ -55,5 +55,21 @@
         }
       }
     }
+  },
+  "services": {
+    "set_segment_colors": {
+      "name": "Set segment colours",
+      "description": "Set a separate colour on each segment of an IOTBT segment device (addressable string), in string order. Up to 61 segments.",
+      "fields": {
+        "colors": {
+          "name": "Colours",
+          "description": "List of [R, G, B] values (0-255), one per segment. [0, 0, 0] leaves a segment dark."
+        },
+        "brightness": {
+          "name": "Brightness",
+          "description": "Overall brightness 0-255, applied to every segment."
+        }
+      }
+    }
   }
 }

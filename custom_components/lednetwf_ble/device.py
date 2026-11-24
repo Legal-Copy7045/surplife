@@ -1900,6 +1900,32 @@ class LEDNetWFDevice:
             return True
         return False
 
+    async def set_segment_colors(
+        self, colors: list[tuple[int, int, int]], brightness: int = 255
+    ) -> bool:
+        """Set a separate colour on each segment of an IOTBT segment device.
+
+        Args:
+            colors: RGB (0-255) per segment, in string order. (0, 0, 0) is dark.
+            brightness: Overall brightness 0-255, scaled into each segment's value.
+        """
+        if not self.is_iotbt_segment:
+            _LOGGER.warning("Device %s does not support per-segment colour", self._name)
+            return False
+        scale = max(0, min(255, int(brightness))) / 255
+        segments = []
+        for r, g, b in colors:
+            hue, sat, val = protocol.rgb_to_hsv(r, g, b)
+            segments.append((hue, sat, round(val * scale)))
+        packet = protocol.build_iotbt_segment_colors_command(segments)
+        _LOGGER.debug("IOTBT per-segment colour: %d segments", len(segments))
+        if await self._send_command(packet):
+            self._effect = None
+            self._white_mode = False
+            self._notify_callbacks()
+            return True
+        return False
+
     async def set_white(self, brightness: int = 255) -> bool:
         """Switch a segment lamp to its fixed warm-white channel.
 
