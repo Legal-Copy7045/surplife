@@ -36,9 +36,12 @@ from .const import (
     CONF_LED_TYPE,
     CONF_COLOR_ORDER,
     CONF_IOTBT_PROTOCOL,
+    CONF_WHITE_CHANNEL,
     CONF_DEFAULT_TRANSITION,
     IOTBT_PROTOCOL_AUTO,
     IOTBT_PROTOCOL_CHOICES,
+    WHITE_CHANNEL_AUTO,
+    WHITE_CHANNEL_CHOICES,
     DEFAULT_DISCONNECT_DELAY,
     DEFAULT_LED_COUNT,
     DEFAULT_SEGMENTS,
@@ -725,6 +728,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 )
             )
 
+        # IOTBT segment devices: warm-white channel override. Product 170 covers
+        # both a lamp with white LEDs and RGB-only strings, so let the user say.
+        if device is not None and device.is_iotbt_segment:
+            current_white = options.get(CONF_WHITE_CHANNEL, WHITE_CHANNEL_AUTO)
+            schema_dict[
+                vol.Optional(CONF_WHITE_CHANNEL, default=current_white)
+            ] = SelectSelector(
+                SelectSelectorConfig(
+                    options=list(WHITE_CHANNEL_CHOICES),
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            )
+
         # Native-transition devices: default fade for calls without a transition
         # (Alexa/emulated Hue, dashboard toggles). Unset keeps the device default.
         if device is not None and device.supports_transition:
@@ -791,6 +807,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         if CONF_IOTBT_PROTOCOL in user_input:
             new_options[CONF_IOTBT_PROTOCOL] = user_input[CONF_IOTBT_PROTOCOL]
+        if CONF_WHITE_CHANNEL in user_input:
+            new_options[CONF_WHITE_CHANNEL] = user_input[CONF_WHITE_CHANNEL]
         if user_input.get(CONF_DEFAULT_TRANSITION) is not None:
             new_options[CONF_DEFAULT_TRANSITION] = float(user_input[CONF_DEFAULT_TRANSITION])
 

@@ -68,6 +68,25 @@ IOTBT_PROTOCOL_CHOICES: Final = (
     IOTBT_PROTOCOL_V3,
 )
 
+# Warm-white channel override for IOTBT segment devices.
+#
+# Product 170 (0xAA, "Symphony_Line") covers both the IOTBTC68 lamp, which has
+# a dedicated warm-white channel driven by 0xE0 0x01 0x00 0xB1 (issue #114),
+# and RGB-only addressable strings such as 300 ft permanent outdoor lights,
+# which silently ignore that command. Nothing in the advertisement tells the
+# two apart, so 'auto' keeps the product-ID default and the user can force it.
+# On an RGB-only string, white is mixed from RGB (saturation 0) via the colour
+# wheel instead.
+CONF_WHITE_CHANNEL: Final = "white_channel"
+WHITE_CHANNEL_AUTO: Final = "auto"
+WHITE_CHANNEL_PRESENT: Final = "present"
+WHITE_CHANNEL_NONE: Final = "none"
+WHITE_CHANNEL_CHOICES: Final = (
+    WHITE_CHANNEL_AUTO,
+    WHITE_CHANNEL_PRESENT,
+    WHITE_CHANNEL_NONE,
+)
+
 # Default values
 DEFAULT_DISCONNECT_DELAY: Final = 30  # seconds; 0 = stay connected (keep-alive)
 KEEPALIVE_RECONNECT_DELAY: Final = 2  # seconds after a drop before reconnecting

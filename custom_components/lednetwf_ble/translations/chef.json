@@ -45,7 +45,8 @@
           "disconnect_delay": "Deescunnect deley (secunds)",
           "led_count": "LED cuoont",
           "led_type": "LED cheep type-a",
-          "color_order": "Culur oorder"
+          "color_order": "Culur oorder",
+          "white_channel": "White channel (auto / present / none)"
         }
       }
     }

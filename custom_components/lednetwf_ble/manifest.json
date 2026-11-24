@@ -19,13 +19,13 @@
     "dependencies": [
         "bluetooth"
     ],
-    "documentation": "https://github.com/8none1/lednetwf_ble",
+    "documentation": "https://github.com/Legal-Copy7045/surplife",
     "integration_type": "device",
     "iot_class": "local_push",
-    "issue_tracker": "https://github.com/8none1/lednetwf_ble/issues",
+    "issue_tracker": "https://github.com/Legal-Copy7045/surplife/issues",
     "requirements": [
         "bleak-retry-connector>=1.17.1",
         "bleak>=0.17.0"
     ],
-    "version": "2.0.1-beta25"
+    "version": "2.0.1-beta25.surplife.1"
 }

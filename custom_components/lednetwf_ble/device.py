@@ -142,6 +142,9 @@ class LEDNetWFDevice:
         self._advertised_product_id: int | None = None
         # Manual protocol override: None = auto, "telink" or "segment" force it.
         self._iotbt_protocol_override: str | None = None
+        # Warm-white channel override for segment devices: None = auto
+        # (product-ID default), "present" or "none" force it.
+        self._white_channel_override: str | None = None
 
         # Callbacks for state updates
         self._callbacks: list[Callable[[], None]] = []
@@ -326,11 +329,16 @@ class LEDNetWFDevice:
         """Return True if a segment IOTBT lamp has a fixed warm-white channel.
 
         Brightness-only white via 0xE0 0x01 0x00 0xB1 (issue #114, product 170).
+        The white-channel override wins over the product-ID default, because
+        product 170 also covers RGB-only strings with no white LEDs.
         """
-        return (
-            self.is_iotbt_segment
-            and self._advertised_product_id in IOTBT_SEGMENT_WHITE_PRODUCT_IDS
-        )
+        if not self.is_iotbt_segment:
+            return False
+        if self._white_channel_override == "none":
+            return False
+        if self._white_channel_override == "present":
+            return True
+        return self._advertised_product_id in IOTBT_SEGMENT_WHITE_PRODUCT_IDS
 
     @property
     def white_mode(self) -> bool:
@@ -698,6 +706,23 @@ class LEDNetWFDevice:
         _LOGGER.info("[%s] IOTBT protocol override set to %s (effective segment=%s, v3=%s)",
                      self._name, self._iotbt_protocol_override or "auto",
                      self.is_iotbt_segment, self.is_iotbt_v3)
+        self._notify_callbacks()
+
+    @property
+    def white_channel_override(self) -> str:
+        """Return the white-channel override ('auto', 'present' or 'none')."""
+        return self._white_channel_override or "auto"
+
+    def set_white_channel_override(self, override: str | None) -> None:
+        """Set the white-channel override ('auto'/None, 'present', 'none')."""
+        self._white_channel_override = (
+            override if override in ("present", "none") else None
+        )
+        if not self.has_segment_white:
+            # Never report a white mode the entity can no longer show.
+            self._white_mode = False
+        _LOGGER.info("[%s] White channel override set to %s (effective segment white=%s)",
+                     self._name, self.white_channel_override, self.has_segment_white)
         self._notify_callbacks()
 
     @property

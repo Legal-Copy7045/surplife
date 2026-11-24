@@ -45,7 +45,8 @@
           "disconnect_delay": "Trennverzögerung (Sekunden)",
           "led_count": "LED-Anzahl",
           "led_type": "LED-Chip-Typ",
-          "color_order": "Farbreihenfolge"
+          "color_order": "Farbreihenfolge",
+          "white_channel": "White channel (auto / present / none)"
         }
       }
     }

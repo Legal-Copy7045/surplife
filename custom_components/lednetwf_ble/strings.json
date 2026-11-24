@@ -50,7 +50,8 @@
           "led_type": "LED chip type",
           "color_order": "Color order",
           "iotbt_protocol": "IOTBT protocol (auto / telink / segment / v3)",
-          "default_transition": "Default fade time when none is given (seconds; blank keeps the device default)"
+          "default_transition": "Default fade time when none is given (seconds; blank keeps the device default)",
+          "white_channel": "White channel (auto / present / none: none for RGB-only strings, white comes from the colour wheel)"
         }
       }
     }

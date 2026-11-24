@@ -45,7 +45,8 @@
           "disconnect_delay": "Délai de déconnexion (secondes)",
           "led_count": "Nombre de LEDs",
           "led_type": "Type de puce LED",
-          "color_order": "Ordre des couleurs"
+          "color_order": "Ordre des couleurs",
+          "white_channel": "White channel (auto / present / none)"
         }
       }
     }

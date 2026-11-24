@@ -1,3 +1,49 @@
+# SurpLife BLE lights for Home Assistant
+
+This is a fork of [8none1/lednetwf_ble](https://github.com/8none1/lednetwf_ble)
+(MIT licence, see `LICENSE`), based on upstream commit
+`27a29523b81cef73e9d767d6cdec1e8d24fd59f5` (version 2.0.1-beta25). It controls
+SurpLife-app Bluetooth lights, which are Zengge "LEDnetWF" / "IOTBT" devices.
+
+It keeps the upstream integration domain (`lednetwf_ble`), so an existing
+LEDnetWF BLE device, its entities and automations carry over unchanged when you
+switch HACS to this repository.
+
+## What this fork adds
+
+### White channel setting (IOTBT segment devices)
+
+Product 170 (`0xAA`, "Symphony_Line" in the SurpLife app) is used both by a lamp
+with dedicated warm-white LEDs and by RGB-only addressable strings, such as 300 ft
+permanent outdoor lights. The upstream integration always offers a white mode
+for product 170, and RGB-only strings silently ignore that command.
+
+**Configure → White channel**:
+
+| Value | Behaviour |
+|---|---|
+| `auto` (default) | Upstream behaviour: white mode for product 170 only |
+| `none` | No white mode. Use the centre of the colour wheel for white (mixed from RGB) |
+| `present` | Force the warm-white mode on for another segment product |
+
+Changing it reloads the device so the colour controls update.
+
+Verified on a 300 ft SurpLife permanent outdoor string (`IOTBT967`, product 170,
+BLE v7, firmware 93): power, RGB colour, brightness and scenes work on the
+segment protocol (auto-detected), white works as RGB with `White channel: none`.
+
+## Installing from this repository
+
+1. In HACS, remove the `8none1/lednetwf_ble` custom repository if you have it
+   (keep your configured device; only the download source changes).
+2. HACS → ⋮ → **Custom repositories** → add
+   `https://github.com/Legal-Copy7045/surplife`, type **Integration**.
+3. Download it and restart Home Assistant.
+
+---
+
+*Upstream README follows.*
+
 # LEDnetWF_ble
 
 Home Assistant custom integration for LEDnetWF devices which use the Zengge Android or iPhone app. WIP

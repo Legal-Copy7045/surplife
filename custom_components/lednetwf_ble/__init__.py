@@ -22,8 +22,10 @@ from .const import (
     CONF_LED_TYPE,
     CONF_COLOR_ORDER,
     CONF_IOTBT_PROTOCOL,
+    CONF_WHITE_CHANNEL,
     CONF_DEFAULT_TRANSITION,
     IOTBT_PROTOCOL_AUTO,
+    WHITE_CHANNEL_AUTO,
     DEFAULT_DISCONNECT_DELAY,
     DEFAULT_LED_COUNT,
     DEFAULT_SEGMENTS,
@@ -91,6 +93,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Apply any IOTBT protocol override (Telink vs segment) from options.
     device.set_iotbt_protocol_override(
         entry.options.get(CONF_IOTBT_PROTOCOL, IOTBT_PROTOCOL_AUTO)
+    )
+    device.set_white_channel_override(
+        entry.options.get(CONF_WHITE_CHANNEL, WHITE_CHANNEL_AUTO)
     )
 
     # Default fade for native-transition devices (unset keeps the device default)
@@ -172,10 +177,21 @@ async def async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None
     new_delay = entry.options.get(CONF_DISCONNECT_DELAY, DEFAULT_DISCONNECT_DELAY)
     device.set_disconnect_delay(new_delay)
 
+    # Supported colour modes are fixed when the light entity is created, so a
+    # change to the protocol or white-channel override needs a full reload for
+    # the colour picker to match.
+    had_white = device.has_segment_white
     # Apply IOTBT protocol override (Telink vs segment)
     device.set_iotbt_protocol_override(
         entry.options.get(CONF_IOTBT_PROTOCOL, IOTBT_PROTOCOL_AUTO)
     )
+    device.set_white_channel_override(
+        entry.options.get(CONF_WHITE_CHANNEL, WHITE_CHANNEL_AUTO)
+    )
+    if device.has_segment_white != had_white:
+        _LOGGER.debug("White channel availability changed, reloading entry")
+        await hass.config_entries.async_reload(entry.entry_id)
+        return
 
     device.default_transition = entry.options.get(CONF_DEFAULT_TRANSITION)
 
