@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sélectionner l'appareil",
+        "description": "Sélectionnez votre appareil LEDnetWF dans la liste ci-dessous.",
+        "data": {
+          "mac": "Appareil"
+        }
+      },
+      "confirm": {
+        "title": "Ajouter l'appareil",
+        "description": "Appareil trouvé : **{name}**\n\n- Adresse : `{address}`\n- ID produit : `{product_id}`\n- Firmware : `{fw_version}`\n\nVoulez-vous tester la connexion en faisant clignoter la lumière ?",
+        "data": {
+          "test_device": "Tester l'appareil (clignotement des couleurs)"
+        }
+      },
+      "options": {
+        "title": "Options de l'appareil",
+        "description": "Configurer les options pour **{name}**.",
+        "data": {
+          "disconnect_delay": "Délai de déconnexion (secondes)",
+          "led_count": "Nombre de LEDs",
+          "led_type": "Type de puce LED",
+          "color_order": "Ordre des couleurs"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à l'appareil. Assurez-vous qu'il est allumé et à portée.",
+      "unknown": "Une erreur inattendue s'est produite."
+    },
+    "abort": {
+      "already_configured": "Cet appareil est déjà configuré.",
+      "no_devices_found": "Aucun appareil LEDnetWF compatible trouvé. Assurez-vous que votre appareil est allumé.",
+      "not_supported": "Cet appareil n'est pas pris en charge.",
+      "no_discovery_info": "Aucune information de découverte d'appareil disponible."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de l'appareil",
+        "data": {
+          "disconnect_delay": "Délai de déconnexion (secondes)",
+          "led_count": "Nombre de LEDs",
+          "led_type": "Type de puce LED",
+          "color_order": "Ordre des couleurs"
+        }
+      }
+    }
+  }
+}

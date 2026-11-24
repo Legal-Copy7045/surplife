@@ -1,0 +1,166 @@
+# LEDnetWF_ble
+
+Home Assistant custom integration for LEDnetWF devices which use the Zengge Android or iPhone app. WIP
+
+## Important note for upgraders
+
+If, after upgrading, your devices suddenly don't work, please delete them via the UI and re-add them again.  There are a number of new features which require
+new metadata to be discovered at the setup phase.  This may not be present on existing devices.
+If this doesn't work you can roll back to a previous release via HACS, and please log an issue with the details of your problem.
+
+## Supported devices
+
+This integration supports various models of Zengge LEDnetWF devices, which may also be known as:
+
+- Zengge LEDnetWF
+- YBCRG-RGBWW
+- Magic Hue
+- Bluetooth full colors selfie ring light
+- Devices advertising as "iotb" prefix. Both IOTBT protocol families are supported: the older "Telink" style (hue colour + classic effects) and the newer "segment" style (per-segment addressable colour + the full built-in scene/effect list, e.g. the "IOTBT6BA" USB corner lamp). The integration auto-detects which family a device uses, and you can override it manually if needed (see [IOTBT Protocol](#iotbt-protocol-telink-vs-segment)).
+
+New devices using the Zengge platform are being released all the time.  We support as many of these as we can.  If you have a device which isn't supported, please log an issue and we will work with you to try and add support.
+
+**Have an unsupported device?** Check out our [BLE Traffic Sniffing Guide](SNIFFING_BLE_TRAFFIC.md) to help us add support for your device!
+
+## Supported Features
+
+- Automatic discovery of supported devices
+- On/Off
+- White / Color temperature mode
+- RGB mode
+- Brightness
+- Effects
+- **Real-time state updates via Bluetooth advertisements** - Device state updates automatically without maintaining active connections
+  - Updates power state, colors, effects, and brightness even when Home Assistant restarts
+  - No connection needed for state monitoring
+  - Reduced Bluetooth interference with other devices
+- Live status updates from remote control (when connected for commands)
+- **Works with passively-scanning Bluetooth proxies** - devices are discovered and controllable without requiring active scanning. Devices are treated as available as soon as Home Assistant can see them, and connect on demand when you control them. (Active scanning still gives nicer live state, but it is no longer required.)
+- **Manual protocol selection for IOTBT devices** - force Telink or segment mode when auto-detection can't tell them apart (see below)
+- **LED hardware configuration for more device types** - LED count, chip type and colour order for ring / "FillLight" devices, and LEDs-per-segment for IOTBT segment devices
+- **Full built-in scene/effect list for IOTBT segment devices** - the named scenes from the official app (Game, Party, Northern Lights, the seasonal ones, etc.)
+
+## Installation
+
+### Requirements
+
+You need to have the bluetooth component configured and working in Home Assistant in order to use this integration.
+
+### Manual installation
+
+Clone this repository into `config/` Home Assistant folder.
+
+### HACS
+
+This integration is now available from within HACS.
+
+Search for "LEDnetWF BLE" and click install.  You will also get notified of future upgrades.
+
+### Configuration Options
+
+#### Basic Settings
+
+**Disconnect Delay (Timeout)**
+- **Default**: 30 seconds
+- **Range**: 0 (never disconnect) to any positive number
+- **Description**: How long to wait before disconnecting from the device when not in use. Setting to 0 means the connection will be maintained permanently, this is not recommended. Shorter timeouts may cause slower response times when controlling the device but will more quickly free up Bluetooth connections for use by other devices.
+- **Keeping connected (0)**: the integration connects at startup and holds one connection slot for the device. If the link drops it reconnects after 2 seconds, and if connecting fails it backs off (15 seconds, doubling up to 5 minutes) so an out-of-range device doesn't tie up the adapter. Retries continue indefinitely, including at Home Assistant startup if the device is out of range, and are logged once as a warning per outage. State is queried after each reconnect. While Home Assistant holds the connection, the vendor app cannot connect to the device. This is mainly useful for devices with a weak signal, where each on-demand connection is slow.
+- **Tip**: If you only make infrequent changes to your lights, consider trying a timeout of 20 seconds. This can help save connection slots for other Bluetooth devices while still providing reasonable responsiveness.
+
+**Device Name**
+- **Description**: Friendly name for your device as it appears in Home Assistant. This can be changed to something more meaningful like "Living Room Strip" or "Bedroom Lights".
+
+#### LED Hardware Settings
+
+**Number of LEDs**
+- **Default**: 64
+- **Description**: The total number of individual LEDs in your strip or device in each segment.  This should be auto detected, but relies on your device being correctly configured in the first place.  If you have 1 segment configured (where your device supports segments) this would be the total number of LEDs on the device.  If you had 2 segments configured this would be half the total number of LEDs.  i.e. each of the two segments would control half the LEDs.
+
+**LED Type (Chip Type)**
+- **Options**: WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B, JY1903, WS2812E
+- **Default**: WS2812B
+- **Description**: The specific LED chip model used in your device. This affects how colors are processed and displayed. Most common strips use WS2812B. Check your device documentation or try different options if colors appear incorrect.
+
+**Color Order**
+- **Options**: RGB, RBG, GRB, GBR, BRG, BGR
+- **Default**: GRB
+- **Description**: The order in which red, green, and blue color data is sent to the LEDs. If colors appear wrong (e.g., red shows as blue), try different color orders until colors display correctly.
+
+**Number of Segments**
+- **Default**: 1
+- **Description**: How many logical segments your LED strip is divided into. Some devices support multiple segments that can be controlled independently. Most single strips use 1 segment.  Not all devices support segments.
+
+#### IOTBT Protocol (Telink vs Segment)
+
+Devices whose name begins with `IOTBT` come in two protocol families that advertise almost identically but speak different command sets:
+
+- **Telink** - hue-based colour and classic effects.
+- **Segment** - per-segment addressable colour and palette-based scenes.
+
+The integration auto-detects which family a device belongs to. Because the two can be genuinely hard to tell apart (and the distinguishing data can change after a device firmware update), you can override the choice:
+
+- **Setting**: device's **Configure** dialog → **IOTBT protocol**
+- **Options**: `auto` (default), `telink`, `segment`
+- **When to use it**: if an IOTBT device turns on and off correctly but **colours or effects don't work**, the protocol was probably auto-detected wrongly. Switch between `telink` and `segment` (and restart / re-open the light) until colour and effects respond. Leave it on `auto` unless you hit this.
+
+#### Advanced Settings
+
+**Ignore Notification Data**
+- **Default**: False (disabled)
+- **Description**: When enabled, the integration will ignore status update notifications from the device and will not update the state of the light in Home Assistant in real time.  When disabled, you'll receive real-time updates when the device state changes (e.g., from physical remote control) while the Bluetooth connection is live.
+
+### Configuration Notes
+
+- **Recommendation**: It's generally recommended to make configuration changes through the official Zengge app first, then use these settings to match your device's actual configuration.
+- **Device Detection**: Many settings (LED count, type, color order, segments) are automatically detected from supported devices during setup. Manual configuration may be needed for older devices or if auto-detection fails.
+- **Effect Performance**: Incorrect LED count or type settings may cause effects to display incorrectly or perform poorly.
+
+## Bluetooth scanning, connections, and proxies
+
+A common point of confusion (especially with ESPHome Bluetooth proxies) is the difference between **scanning** and **connections**. They are separate things and use separate resources.
+
+### Scanning (passive vs active)
+
+Scanning is how Home Assistant *receives advertisements* from a device. It is **connectionless** - it never uses a connection slot.
+
+- **Passive scanning**: Home Assistant only listens for the device's primary advertisement.
+- **Active scanning**: Home Assistant additionally sends a small scan request and receives the device's *scan response*. For these LEDnetWF / IOTBT devices, the scan response is where the live state (power / colour / brightness) is broadcast.
+
+This integration works under **either** mode:
+- Discovery and control work in passive mode (devices are identified by name and become controllable as soon as they are seen).
+- Active scanning additionally gives **live state mirroring**: the entity reflects changes made from a physical remote or the vendor app without Home Assistant having to connect.
+
+### Connections (and connection slots)
+
+A *connection* is established only when the integration needs to **send a command** (on/off, colour, effect, and so on). This uses one of the Bluetooth adapter/proxy's limited **connection slots**. The integration connects on demand and disconnects again after the **Disconnect Delay**, freeing the slot. Connections are never held permanently (unless you set the disconnect delay to 0, which is not recommended).
+
+If you are short on connection slots, the lever to pull is the **Disconnect Delay** (shorter = the slot frees sooner). **Scanning mode has no effect on connection slots.** If anything, active scanning slightly *reduces* connections, because Home Assistant can read state from advertisements instead of connecting to query it.
+
+### ESP32 / ESPHome proxy notes
+
+- ESPHome has **two** unrelated "active" settings, which are easy to confuse: `esp32_ble_tracker: scan_parameters: active: true` (scanning mode, connectionless) and the `bluetooth_proxy:` connection proxying (which uses connection slots and is required for control).
+- **Active scanning adds negligible load and essentially no extra memory** on an ESP32. It transmits a few small scan-request packets and forwards the resulting scan responses; it does not meaningfully increase RAM use. Active scanning is in fact the default for ESPHome Bluetooth proxies. The resource-heavy part of BLE is *connections*, not scanning.
+- The main reason to keep a proxy in **passive** mode is **battery-powered BLE devices** it also covers (sensors, trackers): active scanning makes them respond to scan requests, which drains their batteries faster. Scanning mode is per-proxy, so a good strategy is active scanning on proxies near mains-powered lights and passive on proxies near battery devices.
+
+## Credits
+
+This integration is possible thanks to the work of this incredible people!
+
+- https://github.com/dave-code-ruiz/elkbledom for most of the base Home Assistant integration code adapted for this integration.
+- https://openclipart.org/detail/185270/light-bulb-icon for the original icon.
+
+Thanks!
+
+## Supporters
+
+Thanks to everyone who has provided BLE traces and captures. They are what make support for new devices possible.
+
+Special thanks to those who bought me a coffee:
+
+- [DasMiMiMi](https://github.com/DasMiMiMi)
+
+## Support
+
+In order to add support for more and newer lights I really need to get my hands on them.  That costs money.  Not a lot of money, but some money none the less.  If you would like to support the development of this integration and expanding support for newer devices in the future you can consider a small contribution to the costs via buymeacoffee.  There is no obligation to do this and you are free to use this software with no payments at all.  Any money raised will go exclusively towards purchasing new lights to try and build integrations for.  There is no suggestion that contributing money will get your bug fixed or support added for your lights.  You can see issues where hardware is needed here:  https://github.com/8none1/lednetwf_ble/labels/needs_hardware
+
+https://coff.ee/8none1

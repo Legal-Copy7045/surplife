@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Selectee zee Deefice-a",
+        "description": "Selectee yuoor LEDnetWF deefice-a frum zee leest beloo, bork bork!",
+        "data": {
+          "mac": "Deefice-a"
+        }
+      },
+      "confirm": {
+        "title": "Edd Deefice-a",
+        "description": "Fuoond deefice-a **{name}**\n\n- Eddress: `{address}`\n- Pruodoct ID: `{product_id}`\n- Firmvere-a: `{fw_version}`\n\nVuoold yuoo leeke-a tu test zee cunnecshun by flesheeng zee leeght?",
+        "data": {
+          "test_device": "Test deefice-a (flesh culurs)"
+        }
+      },
+      "options": {
+        "title": "Deefice-a Oopshuns",
+        "description": "Cunfeegoore-a oopshuns fur **{name}**.",
+        "data": {
+          "disconnect_delay": "Deescunnect deley (secunds)",
+          "led_count": "LED cuoont",
+          "led_type": "LED cheep type-a",
+          "color_order": "Culur oorder"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cuoold nut cunnect tu zee deefice-a. Insoore-a it is pooered oon und in runge-a, bork bork!",
+      "unknown": "Un unixpected errur ooccurred. Bork!"
+    },
+    "abort": {
+      "already_configured": "Zees deefice-a is elreedy cunfeegoored.",
+      "no_devices_found": "Nu sooppurted LEDnetWF deefices fuoond. Meke-a soore-a yuoor deefice-a is pooered oon.",
+      "not_supported": "Zees deefice-a is nut sooppurted.",
+      "no_discovery_info": "Nu deefice-a deescufery inffurmeshun efeeeleble-a."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Deefice-a Oopshuns",
+        "data": {
+          "disconnect_delay": "Deescunnect deley (secunds)",
+          "led_count": "LED cuoont",
+          "led_type": "LED cheep type-a",
+          "color_order": "Culur oorder"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gerät auswählen",
+        "description": "Wählen Sie Ihr LEDnetWF-Gerät aus der Liste unten.",
+        "data": {
+          "mac": "Gerät"
+        }
+      },
+      "confirm": {
+        "title": "Gerät hinzufügen",
+        "description": "Gerät gefunden: **{name}**\n\n- Adresse: `{address}`\n- Produkt-ID: `{product_id}`\n- Firmware: `{fw_version}`\n\nMöchten Sie die Verbindung testen, indem das Licht blinkt?",
+        "data": {
+          "test_device": "Gerät testen (Farben blinken)"
+        }
+      },
+      "options": {
+        "title": "Geräteoptionen",
+        "description": "Optionen für **{name}** konfigurieren.",
+        "data": {
+          "disconnect_delay": "Trennverzögerung (Sekunden)",
+          "led_count": "LED-Anzahl",
+          "led_type": "LED-Chip-Typ",
+          "color_order": "Farbreihenfolge"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Gerät konnte nicht hergestellt werden. Stellen Sie sicher, dass es eingeschaltet und in Reichweite ist.",
+      "unknown": "Ein unerwarteter Fehler ist aufgetreten."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits konfiguriert.",
+      "no_devices_found": "Keine unterstützten LEDnetWF-Geräte gefunden. Stellen Sie sicher, dass Ihr Gerät eingeschaltet ist.",
+      "not_supported": "Dieses Gerät wird nicht unterstützt.",
+      "no_discovery_info": "Keine Geräteerkennungsinformationen verfügbar."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Geräteoptionen",
+        "data": {
+          "disconnect_delay": "Trennverzögerung (Sekunden)",
+          "led_count": "LED-Anzahl",
+          "led_type": "LED-Chip-Typ",
+          "color_order": "Farbreihenfolge"
+        }
+      }
+    }
+  }
+}

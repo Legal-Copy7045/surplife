@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Selecionar dispositivo",
+        "description": "Selecione seu dispositivo LEDnetWF na lista abaixo.",
+        "data": {
+          "mac": "Dispositivo"
+        }
+      },
+      "confirm": {
+        "title": "Adicionar dispositivo",
+        "description": "Dispositivo encontrado: **{name}**\n\n- Endereço: `{address}`\n- ID do produto: `{product_id}`\n- Firmware: `{fw_version}`\n\nGostaria de testar a conexão fazendo a luz piscar?",
+        "data": {
+          "test_device": "Testar dispositivo (piscar cores)"
+        }
+      },
+      "options": {
+        "title": "Opções do dispositivo",
+        "description": "Configurar opções para **{name}**.",
+        "data": {
+          "disconnect_delay": "Atraso de desconexão (segundos)",
+          "led_count": "Quantidade de LEDs",
+          "led_type": "Tipo de chip LED",
+          "color_order": "Ordem das cores"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Não foi possível conectar ao dispositivo. Certifique-se de que está ligado e ao alcance.",
+      "unknown": "Ocorreu um erro inesperado."
+    },
+    "abort": {
+      "already_configured": "Este dispositivo já está configurado.",
+      "no_devices_found": "Nenhum dispositivo LEDnetWF compatível encontrado. Certifique-se de que seu dispositivo está ligado.",
+      "not_supported": "Este dispositivo não é compatível.",
+      "no_discovery_info": "Nenhuma informação de descoberta de dispositivo disponível."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opções do dispositivo",
+        "data": {
+          "disconnect_delay": "Atraso de desconexão (segundos)",
+          "led_count": "Quantidade de LEDs",
+          "led_type": "Tipo de chip LED",
+          "color_order": "Ordem das cores"
+        }
+      }
+    }
+  }
+}

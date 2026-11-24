@@ -1,0 +1,307 @@
+# Basic Control Commands
+
+All commands include a checksum byte as the last byte: `checksum = sum(data) & 0xFF`
+
+---
+
+## RGB Color Command (0x31)
+
+### Standard 9-Byte Format
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x31 |
+| 1-3 | R, G, B | 0-255 each |
+| 4-5 | WW, CW | 0-255 each |
+| 6 | Mode | 0x5A=RGBCW, 0xF0=RGB, 0x0F=White |
+| 7 | Persist | 0xF0=save, 0x0F=temp |
+| 8 | Checksum | Sum of bytes 0-7 |
+
+```python
+def set_rgbcw(r, g, b, ww=0, cw=0, persist=False):
+    cmd = bytearray([0x31, r&0xFF, g&0xFF, b&0xFF, ww&0xFF, cw&0xFF,
+                     0x5A, 0xF0 if persist else 0x0F])
+    cmd.append(sum(cmd) & 0xFF)
+    return bytes(cmd)
+```
+
+### Format Variants by Product ID
+
+| Product IDs | Method | Format |
+|-------------|--------|--------|
+| 37, R0() devices | tc.b.t() | 9-byte: `[0x31, R,G,B, WW,CW, 0xF0, persist, chk]` |
+| 51, 8, 4, 161 | tc.b.v() | 8-byte: `[0x31, R,G,B, W, 0x00, persist, chk]` |
+| 68, 84, 6, 72 | tc.b.x() | 8-byte: `[0x31, R,G,B, W, mode, persist, chk]` |
+| BLE v5+ | tc.d.a() | Use 0x3B command (see below) |
+
+### Mode Byte Values
+
+| Value | Mode | Description |
+|-------|------|-------------|
+| 0x5A | RGBCW | All channels active |
+| 0xF0 | RGB only | RGB mode, whites ignored |
+| 0x0F | White only | White mode, RGB ignored |
+
+---
+
+## CCT Temperature Command (0x35)
+
+For CCT-only devices using color temperature control.
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x35 |
+| 1 | Sub-command | 0xB1 |
+| 2 | Temperature % | 0-100 (0=warm, 100=cool) |
+| 3 | Brightness % | 0-100 |
+| 4-5 | Reserved | 0x00, 0x00 |
+| 6-7 | Duration | Big-endian, value × 10 = deciseconds |
+| 8 | Checksum | Sum of bytes 0-7 |
+
+```python
+def set_cct(temp_pct: int, bright_pct: int, duration_sec: float = 0.3) -> bytes:
+    duration = int(duration_sec * 10)
+    cmd = bytearray([0x35, 0xB1, temp_pct & 0xFF, bright_pct & 0xFF,
+                     0x00, 0x00, (duration >> 8) & 0xFF, duration & 0xFF])
+    cmd.append(sum(cmd) & 0xFF)
+    return bytes(cmd)
+```
+
+---
+
+## Brightness Command (0x47) - Legacy
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x47 |
+| 1 | Brightness | 0-255 |
+| 2 | Checksum | Sum of bytes 0-1 |
+
+---
+
+## Brightness Command (0x3B Mode 0x01) - Firmware v9+
+
+Standalone brightness control for modern devices. Adjusts brightness independent of current mode.
+
+**Source**: `wifi_dp_cmd.json`, `ble_dp_cmd.json` - function `bright_value_v2`
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x3B |
+| 1 | Mode | 0x01 |
+| 2-3 | Reserved | 0x00, 0x00 |
+| 4 | Brightness | 0-100 (percent) |
+| 5 | Reserved | 0x00 |
+| 6 | Brightness | 0-100 (repeated) |
+| 7-9 | Delay | Big-endian 24-bit (ms) |
+| 10-11 | Gradient | Big-endian 16-bit |
+| 12 | Checksum | Sum of bytes 0-11 |
+
+```python
+def build_brightness_v2(brightness: int, delay: int = 0, gradient: int = 0) -> bytes:
+    """Build standalone brightness command for firmware v9+ devices."""
+    brightness = max(0, min(100, brightness))
+    cmd = bytearray([
+        0x3B, 0x01, 0x00, 0x00,
+        brightness & 0xFF, 0x00, brightness & 0xFF,
+        (delay >> 16) & 0xFF, (delay >> 8) & 0xFF, delay & 0xFF,
+        (gradient >> 8) & 0xFF, gradient & 0xFF
+    ])
+    cmd.append(sum(cmd) & 0xFF)
+    return bytes(cmd)
+```
+
+---
+
+## Power Commands
+
+### Modern Power (0x3B) - BLE v5+
+
+**Recommended for most devices.**
+
+PowerType values:
+- `0x23` = Power ON
+- `0x24` = Power OFF
+- `0x25` = Toggle
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x3B |
+| 1 | PowerType | 0x23/0x24/0x25 |
+| 2-6 | Zeros | 0x00 × 5 |
+| 7-9 | Duration | 0x00, 0x00, 0x32 (50ms) |
+| 10-11 | Zeros | 0x00 × 2 |
+| 12 | Checksum | Sum of bytes 0-11 |
+
+### Legacy Power (0x71) - BLE v1-4
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x71 |
+| 1 | State | 0x23=ON, 0x24=OFF |
+| 2 | Persist | 0xF0=save, 0x0F=temp |
+| 3 | Checksum | Sum of bytes 0-2 |
+
+Examples:
+- Power ON: `[0x71, 0x23, 0x0F, 0xA3]`
+- Power OFF: `[0x71, 0x24, 0x0F, 0xA4]`
+
+### Very Old Power (0x11)
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0-2 | Header | 0x11, 0x1A, 0x1B |
+| 3 | State | 0xF0=ON, 0x0F=OFF |
+| 4 | Checksum | Sum of bytes 0-3 |
+
+---
+
+## HSV/Symphony Color Command (0x3B)
+
+For BLE v5+ / Symphony devices. Uses HSV color space.
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x3B |
+| 1 | Mode | 0xA1=color, 0xB1=CCT, 0x23/0x24=power |
+| 2-3 | Hue+Sat packed | `(hue << 7) \| sat` as big-endian |
+| 4 | Brightness | 0-100 |
+| 5-6 | Params | Mode-specific |
+| 7-9 | RGB / delay | Depends on sub-command and device family: redundant RGB on Symphony 0xA1, a 24-bit delay in ms on unified 0xA1 (product 0x27 BLE v5). See [Bytes 7-11 by sub-command](#bytes-7-11-by-sub-command-what-the-app-templates-actually-send); send zeros |
+| 10-11 | Time / gradient | Depends on sub-command and device family: time on Symphony 0xA1, gradient on unified 0xA1. Use 0x00, 0x00 for instant |
+| 12 | Checksum | Sum of bytes 0-11 |
+
+### HSV Encoding
+
+```python
+# Encode
+packed = (hue << 7) | saturation  # hue: 0-360, sat: 0-100
+byte_hi = (packed >> 8) & 0xFF
+byte_lo = packed & 0xFF
+
+# Decode
+packed = (byte_hi << 8) | byte_lo
+hue = packed >> 7
+saturation = packed & 0x7F
+```
+
+#### Reading this encoding out of a capture (important)
+
+For any saturation up to 100, `byte_hi` is **numerically identical to
+`hue // 2`**, because `sat` never reaches the 256 needed to carry into the high
+byte:
+
+```
+byte_hi = ((hue << 7) | sat) >> 8 == hue // 2       for sat <= 100
+byte_lo = ((hue << 7) | sat) & 0xFF == sat + (128 if hue is odd else 0)
+```
+
+So a capture of fully saturated colours looks exactly like "hue in half-degree
+units followed by a saturation byte", and both readings produce the same bytes
+for every even hue. They diverge only on odd hues, where the correct low byte is
+`sat + 128` (a half-degree of hue). This has already caused one misreading of a
+capture, see `ai_instructions/DISCOVERIES.md`.
+
+If you are decoding a new device, test a **desaturated** colour on an **odd**
+hue before concluding which encoding it uses. Pure red, yellow and blue cannot
+tell them apart.
+
+### Mode Values
+
+| Mode | Purpose |
+|------|---------|
+| 0x23 | Power ON |
+| 0x24 | Power OFF |
+| 0xA1 | Solid Color (HSV) |
+| 0xB1 | CCT Temperature |
+
+### Time Field (CRITICAL!)
+
+**Use `0x00, 0x00` for instant response!**
+
+Non-zero values cause delays (interpreted as seconds):
+- `0x00, 0x1E` = ~30 second delay
+- `0x00, 0x32` = ~50 second delay
+
+### Bytes 7-11 by sub-command (what the app templates actually send)
+
+The meaning of bytes 7-11 is **not fixed across 0x3B sub-commands**. The app's
+`wifi_dp_cmd.json` templates name the fields explicitly:
+
+| Function | Template | Bytes 7-9 | Bytes 10-11 |
+|----------|----------|-----------|-------------|
+| `bright_value_v2` (0x01) | `3b010000{value}00{value}{delay}{delay}{delay}{gradient}{gradient}` | fade, 24-bit, 10 ms units | gradient (keep 0) |
+| `temp_value_v2` (0xB1) | `3bb1000000{cct}{bright}00001e0000` | `00 00 1E` = 30 ms delay | `00 00` |
+| `switch_led_v2` (0x23/0x24) | `3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}` | gradient | delay |
+| 0xA1 colour, Symphony | (not in the JSON; from working captures) | redundant RGB | time |
+| 0xA1 colour, product 0x27 BLE v5 | (from device testing, PR #104) | fade, 24-bit, 10 ms units | gradient (non-zero: command ignored) |
+
+Practical rule: **send zeros in bytes 7-11 unless a capture for that exact
+device shows otherwise.** On product 0x27 the Symphony-style RGB in bytes 7-9
+was read as a fade time of `(R << 16 | G << 8 | B)` x 10 ms, so pure blue took
+a couple of seconds, green minutes and anything with red hours. That
+looked exactly like "the device ignores 0x3B".
+
+### Byte 9 is not always the blue channel
+
+Bytes 7-9 are documented above as redundant RGB, which is what our colour
+builder puts there. But the app's own templates put a transition/gradient value
+in byte 9 for other modes:
+
+- `temp_value_v2` = `3bb1000000{cct}{bright}00001e0000` - a hardcoded `0x1E` at
+  byte 9.
+- The `E0 01` colour capture in
+  [17_device_configuration.md](17_device_configuration.md) has `0x14` at byte 9
+  while setting red, yellow and blue, so it cannot be a blue channel there
+  either.
+
+Treat byte 9 as mode-dependent when decoding a capture.
+
+---
+
+## CCT via 0x3B (Mode 0xB1)
+
+Alternative CCT command for Symphony/Ring Light devices.
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0x3B |
+| 1 | Mode | 0xB1 |
+| 2-4 | Zeros | 0x00 × 3 |
+| 5 | Temperature % | 0-100 |
+| 6 | Brightness % | 0-100 |
+| 7-9 | Delay (ms) | 0x00 × 3 works; the app's `temp_value_v2` sends 0x00, 0x00, 0x1E (30 ms) |
+| 10-11 | Time | 0x00, 0x00 for instant |
+| 12 | Checksum | Sum of bytes 0-11 |
+
+```python
+def build_cct_0x3B(temp_pct: int, bright_pct: int) -> bytes:
+    cmd = bytearray([0x3B, 0xB1, 0x00, 0x00, 0x00,
+                     temp_pct & 0xFF, bright_pct & 0xFF,
+                     0x00, 0x00, 0x00, 0x00, 0x00])
+    cmd.append(sum(cmd) & 0xFF)
+    return bytes(cmd)
+```
+
+---
+
+## Segment Color Command (0xA0)
+
+For setting individual segment colors on addressable LED strips.
+
+| Byte | Field | Value |
+|------|-------|-------|
+| 0 | Command | 0xA0 |
+| 1 | Reserved | 0x00 |
+| 2 | Segment count | N |
+| 3+ | Segment data | 8 bytes per segment |
+| last | Checksum | Sum of all previous |
+
+Per-segment data (8 bytes):
+```
+[0x00, segment_num, R, G, B, 0x00, 0x00, 0xFF]
+```
+
+---
+
+**For effect commands, see [06_effect_commands.md](06_effect_commands.md)**
