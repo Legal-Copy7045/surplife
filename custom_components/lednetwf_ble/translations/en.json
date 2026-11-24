@@ -57,7 +57,7 @@
   "services": {
     "set_segment_colors": {
       "name": "Set segment colours",
-      "description": "Set a separate colour on each segment of an IOTBT segment device (addressable string), in string order. Up to 61 segments.",
+      "description": "Set a separate colour on each segment of an IOTBT segment device (addressable string), in string order. Strings repeat a fixed-length pattern: the 300 ft product-170 string uses the first 15 entries and repeats them 6 times; later entries are ignored. Up to 61 entries.",
       "fields": {
         "colors": {
           "name": "Colours",

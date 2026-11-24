@@ -32,6 +32,41 @@ Verified on a 300 ft SurpLife permanent outdoor string (`IOTBT967`, product 170,
 BLE v7, firmware 93): power, RGB colour, brightness and scenes work on the
 segment protocol (auto-detected), white works as RGB with `White channel: none`.
 
+### Per-segment colour action
+
+`lednetwf_ble.set_segment_colors` sets a separate colour on each segment of an
+IOTBT segment device, in string order:
+
+```yaml
+action: lednetwf_ble.set_segment_colors
+target:
+  entity_id: light.outside_led_permanent_lights
+data:
+  brightness: 255
+  colors:
+    - [255, 0, 0]
+    - [0, 255, 0]
+    # ... one [R, G, B] per pattern entry; [0, 0, 0] is dark
+```
+
+It sends the `E1 03` frame with one `A1 <hue/2> <sat> <val>` entry per colour
+(up to 61 per frame).
+
+**The string repeats a fixed-length pattern.** It does not map entries to
+physical segments one-to-one. On the 300 ft string above (`IOTBT967`), testing
+one lit entry at a time showed:
+
+| Entry lit (only one) | Result |
+|---|---|
+| #1, #15 | 6 lit blocks along the string |
+| #16, #17, #20, #52 | nothing lit |
+
+So that string uses the **first 15 entries** and repeats them **6 times**
+(90 segments). Entries after #15 are ignored. Design patterns as 15 colours.
+The LED-settings read-back (52 segments x 60 LEDs) does not match this and is
+not used for anything here. Other strings may use a different pattern length;
+the same one-lit-entry test finds it.
+
 ## Installing from this repository
 
 1. In HACS, remove the `8none1/lednetwf_ble` custom repository if you have it
